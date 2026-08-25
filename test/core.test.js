@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { findFailedPlugins, parseDumpConfig } from "../lib/dsh.js";
+import { findFailedPlugins, parseDumpConfig, readProfileBundles } from "../lib/dsh.js";
 import { selectThirdPartyIds } from "../lib/launcher.js";
 import { disablePlugin, isDisabled } from "../lib/patch.js";
 
@@ -72,8 +72,37 @@ test("解析来源 bundle 注释", () => {
   assert.equal(entries[2].source, "@deepseek-ai/dsh-base");
 });
 
+console.log("readProfileBundles");
+test("读取 profile 的 dsh.profile.bundles", () => {
+  const dir = mkdtempSync(join(tmpdir(), "dsh-safe-test-"));
+  writeFileSync(
+    join(dir, "package.json"),
+    JSON.stringify({
+      name: "dsh-profile-web",
+      dsh: {
+        profile: {
+          bundles: ["@deepseek-ai/dsh-base", "@liustack/modlens"],
+        },
+      },
+    }),
+  );
+  assert.deepEqual(readProfileBundles(dir), [
+    "@deepseek-ai/dsh-base",
+    "@liustack/modlens",
+  ]);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test("读不到 bundles 时返回 null", () => {
+  const dir = mkdtempSync(join(tmpdir(), "dsh-safe-test-"));
+  assert.equal(readProfileBundles(dir), null); // 无 package.json
+  writeFileSync(join(dir, "package.json"), JSON.stringify({ name: "x" }));
+  assert.equal(readProfileBundles(dir), null); // 无 dsh.profile.bundles
+  rmSync(dir, { recursive: true, force: true });
+});
+
 console.log("selectThirdPartyIds");
-test("只选第三方插件，保留 DSH 自带", () => {
+test("动态模式：只选第三方 bundle 的插件，保留 DSH 自带", () => {
   const entries = [
     { id: "timer", name: "a", source: "@deepseek-ai/dsh-base" },
     { id: "modlens", name: "b", source: "@liustack/modlens" },
@@ -81,7 +110,23 @@ test("只选第三方插件，保留 DSH 自带", () => {
     { id: "console", name: "d", source: "@noob-stupid/dsh-plugin-console" },
     { id: "unknown", name: "e", source: null },
   ];
-  const ids = selectThirdPartyIds(entries);
+  const thirdParty = new Set([
+    "@liustack/modlens",
+    "@noob-stupid/dsh-plugin-console",
+  ]);
+  const ids = selectThirdPartyIds(entries, thirdParty);
+  assert.deepEqual(ids, ["modlens", "console", "unknown"]);
+});
+
+test("回退模式：thirdPartyBundles 为 null 时用硬编码白名单", () => {
+  const entries = [
+    { id: "timer", name: "a", source: "@deepseek-ai/dsh-base" },
+    { id: "modlens", name: "b", source: "@liustack/modlens" },
+    { id: "web-runtime", name: "c", source: "@deepseek-ai/dsh-web-app" },
+    { id: "console", name: "d", source: "@noob-stupid/dsh-plugin-console" },
+    { id: "unknown", name: "e", source: null },
+  ];
+  const ids = selectThirdPartyIds(entries, null);
   assert.deepEqual(ids, ["modlens", "console", "unknown"]);
 });
 

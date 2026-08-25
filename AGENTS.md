@@ -15,7 +15,7 @@ dsh-safe/
 │   └── dsh-safe.js       # CLI 入口（手写参数解析，零依赖）
 ├── lib/
 │   ├── launcher.js       # 核心：spawn→检测→禁用→重启 + 安全模式
-│   ├── dsh.js            # spawn dsh、解析 --dump-config、从 stderr 提取失败插件
+│   ├── dsh.js            # spawn dsh、解析 --dump-config、读 profile bundles、提取失败插件
 │   ├── patch.js          # 读写 cordis.patch.yml（含空数组 [] 处理）
 │   ├── config.js         # 配置读写（config.json）
 │   ├── logger.js         # 日志（文件 + 保留上限截断）
@@ -91,8 +91,8 @@ dsh-safe <profile> [args...]
 
 `dsh-safe --safe <profile>` 只禁用**第三方插件**，保留 DSH 自带的 bundle。
 
-- 第三方识别：`--dump-config` 的 `# == <bundle名>` 来源注释，来源不在 `BUILTIN_BUNDLES` 白名单里的就是第三方。
-- `BUILTIN_BUNDLES` 硬编码：`@deepseek-ai/dsh-base` / `@deepseek-ai/dsh-web-app` / `@deepseek-ai/dsh-headless`。
+- 第三方识别：读 profile 的 `package.json` 的 `dsh.profile.bundles`，非 `@deepseek-ai/*` scope 的 bundle 视为第三方；`--dump-config` 的 `# == <bundle名>` 来源注释落在第三方集合里的 entry 即禁用。
+- 读不到 bundles 时回退硬编码白名单（`@deepseek-ai/dsh-base` / `@deepseek-ai/dsh-web-app` / `@deepseek-ai/dsh-headless`）。
 - 实现：把禁用条目写进**临时文件** `$DSH_HOME/dsh-safe/safe-mode.patch.yml`，用 `dsh --patch <临时文件>` 启动。**不修改 cordis.patch.yml**，所以安全模式是临时的、一次性的，下次正常启动原配置原样生效。
 
 ## 关键设计决策与坑
@@ -106,7 +106,7 @@ dsh-safe <profile> [args...]
 ## 已知限制
 
 - 依赖 DSH 的 `--dump-config` 输出格式和启动错误信息格式，DSH 大版本更新可能变化。
-- `BUILTIN_BUNDLES` 是硬编码白名单，DSH 新增自带 bundle 时需手动更新。
+- `BUILTIN_BUNDLES` 硬编码白名单仅作为读不到 profile bundles 时的回退；正常路径按 `@deepseek-ai/*` scope 动态判定，DSH 新增自带 bundle 无需更新。
 - 自动禁用只处理「能定位到失败插件」的情况；定位不到时提示手动处理。
 
 ## 测试

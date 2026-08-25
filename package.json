@@ -1,6 +1,6 @@
 {
   "name": "dsh-safe-keeper",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DSH 启动器：自动禁用启动失败的插件并重启，支持安全模式、日志与配置",
   "keywords": [
     "dsh",

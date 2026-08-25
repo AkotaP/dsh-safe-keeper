@@ -84,7 +84,7 @@ dsh-safe config set logLevel debug
 
 ## 安全模式
 
-`dsh-safe --safe <profile>` 会**只禁用第三方插件**（通过 `dsh plugin add` 安装的），保留 DSH 自带的 bundle（`dsh-base` / `dsh-web-app` / `dsh-headless`），然后启动。
+`dsh-safe --safe <profile>` 会**只禁用第三方插件**（通过 `dsh plugin add` 安装的），保留 DSH 自带的 bundle（`@deepseek-ai/*`），然后启动。
 
 这样即使某个第三方插件把 DSH 搞崩了，也能用安全模式启动一个「干净」的 DSH 来恢复。
 
@@ -103,5 +103,5 @@ dsh-safe config set logLevel debug
 ## 限制
 
 - 依赖 DSH 的 `--dump-config` 输出格式和启动错误信息格式，DSH 大版本更新可能变化；
-- 安全模式的「DSH 自带 bundle」是硬编码白名单（`dsh-base` / `dsh-web-app` / `dsh-headless`）；
+- 安全模式按 profile 的 `dsh.profile.bundles` 动态区分自带/第三方（`@deepseek-ai/*` 视为自带），读不到时回退硬编码白名单；
 - 自动禁用只处理「能定位到失败插件」的情况；定位不到时会提示手动处理。
