@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { findFailedPlugins, parseDumpConfig, readProfileBundles } from "../lib/dsh.js";
-import { selectThirdPartyIds } from "../lib/launcher.js";
+import { isBuiltinModule, selectThirdPartyIds } from "../lib/launcher.js";
 import { disablePlugin, isDisabled } from "../lib/patch.js";
 
 let passed = 0;
@@ -128,6 +128,16 @@ test("回退模式：thirdPartyBundles 为 null 时用硬编码白名单", () =>
   ];
   const ids = selectThirdPartyIds(entries, null);
   assert.deepEqual(ids, ["modlens", "console", "unknown"]);
+});
+
+console.log("isBuiltinModule");
+test("识别 DSH 自带插件（cordis:* / @deepseek-ai/*）", () => {
+  assert.equal(isBuiltinModule("cordis:include"), true);
+  assert.equal(isBuiltinModule("@deepseek-ai/cordis-plugin-timer"), true);
+  assert.equal(isBuiltinModule("@deepseek-ai/dsh-tool-bash"), true);
+  assert.equal(isBuiltinModule("@liustack/modlens"), false);
+  assert.equal(isBuiltinModule("dsh-message-edit"), false);
+  assert.equal(isBuiltinModule("@noob-stupid/dsh-plugin-console"), false);
 });
 
 console.log("findFailedPlugins");

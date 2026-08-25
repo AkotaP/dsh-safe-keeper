@@ -97,7 +97,7 @@ dsh-safe config set logLevel debug
 1. `spawn dsh --profile <name> <args>`，捕获 stderr 和退出码；
 2. 退出码为 0 → 正常退出，打印「本次自动禁用了哪些插件」；
 3. 退出码非 0 → 跑 `dsh --dump-config` 拿到插件清单（id ↔ 模块名 ↔ 来源 bundle），从 stderr 里提取失败插件的模块名；
-4. 往 `$DSH_HOME/profiles/<name>/cordis.patch.yml` 追加 `disabled: true`（带 `# auto-disabled by dsh-safe` 标记，与用户手动禁用区分）；
+4. 往 `$DSH_HOME/profiles/<name>/cordis.patch.yml` 追加 `disabled: true`（带 `# auto-disabled by dsh-safe` 标记，与用户手动禁用区分；DSH 自带插件 `cordis:*` / `@deepseek-ai/*` 不自动禁用，提示手动处理）；
 5. 重启，超过 `retryLimit` 次仍失败则放弃。
 
 ## 限制
@@ -105,3 +105,4 @@ dsh-safe config set logLevel debug
 - 依赖 DSH 的 `--dump-config` 输出格式和启动错误信息格式，DSH 大版本更新可能变化；
 - 安全模式按 profile 的 `dsh.profile.bundles` 动态区分自带/第三方（`@deepseek-ai/*` 视为自带），读不到时回退硬编码白名单；
 - 自动禁用只处理「能定位到失败插件」的情况；定位不到时会提示手动处理。
+- 自动禁用跳过 DSH 自带插件（`cordis:*` / `@deepseek-ai/*`），自带插件失败需手动处理（升级 DSH 或检查配置）。

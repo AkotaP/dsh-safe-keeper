@@ -86,6 +86,7 @@ dsh-safe <profile> [args...]
 - 带 `# auto-disabled by dsh-safe` 标记，与用户手动禁用区分（需求：不影响用户手动禁用）。
 - 追加不覆盖，保留用户已有条目。
 - **空数组 `[]` 处理**：cordis.patch.yml 初始是 `[]`，直接追加 `- id:` 会产出非法 YAML，所以要把末尾的 `[]` 替换成条目。
+- **自带插件保护**：`cordis:*` 和 `@deepseek-ai/*` 的插件启动失败时不自动禁用（禁了可能连锁破坏），提示手动处理（升级 DSH 或检查配置）。
 
 ### 安全模式（--safe）
 
@@ -108,6 +109,7 @@ dsh-safe <profile> [args...]
 - 依赖 DSH 的 `--dump-config` 输出格式和启动错误信息格式，DSH 大版本更新可能变化。
 - `BUILTIN_BUNDLES` 硬编码白名单仅作为读不到 profile bundles 时的回退；正常路径按 `@deepseek-ai/*` scope 动态判定，DSH 新增自带 bundle 无需更新。
 - 自动禁用只处理「能定位到失败插件」的情况；定位不到时提示手动处理。
+- 自动禁用跳过 DSH 自带插件（`cordis:*` / `@deepseek-ai/*`），自带插件失败需手动处理（升级 DSH 或检查配置）。
 
 ## 测试
 
