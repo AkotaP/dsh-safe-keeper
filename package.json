@@ -1,0 +1,30 @@
+{
+  "name": "dsh-safe-keeper",
+  "version": "0.1.0",
+  "description": "DSH 启动器：自动禁用启动失败的插件并重启，支持安全模式、日志与配置",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "launcher",
+    "cli",
+    "plugin",
+    "cordis"
+  ],
+  "homepage": "https://github.com/AkotaP/dsh-safe-keeper#readme",
+  "bugs": {
+    "url": "https://github.com/AkotaP/dsh-safe-keeper/issues"
+  },
+  "license": "MIT",
+  "author": "AkotaP",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AkotaP/dsh-safe-keeper.git"
+  },
+  "type": "module",
+  "bin": {
+    "dsh-safe": "bin/dsh-safe.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
