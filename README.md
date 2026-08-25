@@ -12,15 +12,35 @@ DSH 的启动是「fail-loud」的——只要有一个插件启动失败，整�
 
 ## 安装
 
+### 1. 获取本项目
+
+```bash
+# 方式 A：clone 本项目到本地（推荐）
+git clone https://github.com/AkotaP/dsh-safe-keeper.git
+
+# 方式 B：下载本项目 ZIP
+# 在 GitHub 仓库页面点 Code → Download ZIP，解压到本地
+```
+
+### 2. 安装 / 使用（三选一）
+
+先进入项目目录（上一步 clone 或解压出来的 `dsh-safe-keeper` 文件夹）
+
+```bash
+cd dsh-safe-keeper
+```
+
+然后在项目目录下，三选一进行安装：
+
 ```bash
 # 方式一：全局安装（推荐）
-npm install -g <dsh-safe 目录>
+npm install -g .
 
-# 方式二：开发时直接 link
-cd <dsh-safe 目录> && npm link
+# 方式二：开发时直接 link（改代码立即生效）
+npm link
 
 # 方式三：不安装，直接用 node 跑
-node <dsh-safe 目录>/bin/dsh-safe.js <profile>
+node bin/dsh-safe.js <profile>
 ```
 
 要求：`dsh` 已在 PATH 中，Node >= 18。
