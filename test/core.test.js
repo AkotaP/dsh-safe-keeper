@@ -1,9 +1,15 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { findFailedPlugins, parseDumpConfig, readProfileBundles } from "../lib/dsh.js";
-import { isBuiltinModule, selectThirdPartyIds } from "../lib/launcher.js";
+import {
+  buildRestartArgs,
+  isBuiltinModule,
+  isWebProfile,
+  selectThirdPartyIds,
+} from "../lib/launcher.js";
+import { loadConfig } from "../lib/config.js";
 import { disablePlugin, isDisabled } from "../lib/patch.js";
 
 let passed = 0;
@@ -207,6 +213,70 @@ test("处理空数组 [] 的 cordis.patch.yml", () => {
   assert.equal(isDisabled(content, "broken"), true);
   assert.ok(content.includes("- id: broken\n  disabled: true"));
 
+  rmSync(dir, { recursive: true, force: true });
+});
+
+console.log("loadConfig restart 默认值");
+test("会话内重启默认需要提权，重启也不打开浏览器窗口", () => {
+  const dir = mkdtempSync(join(tmpdir(), "dsh-safe-cfg-"));
+  const config = loadConfig(dir);
+  assert.equal(config.restart.requireEscalation, true);
+  assert.equal(config.restart.noOpen, true);
+  assert.equal(config.restart.enabled, true);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+console.log("buildRestartArgs");
+test("首次启动不追加参数", () => {
+  assert.deepEqual(buildRestartArgs([], { isRestart: false, webProfile: true }), []);
+  assert.deepEqual(buildRestartArgs(["--port", "3080"], { isRestart: false, webProfile: true }), [
+    "--port",
+    "3080",
+  ]);
+});
+
+test("重启 + web profile 追加 --no-open", () => {
+  assert.deepEqual(
+    buildRestartArgs(["--port", "3080"], { isRestart: true, webProfile: true }),
+    ["--port", "3080", "--no-open"],
+  );
+});
+
+test("非 web profile 不追加（--no-open 会变成未知参数）", () => {
+  assert.deepEqual(buildRestartArgs([], { isRestart: true, webProfile: false }), []);
+});
+
+test("已有 --no-open 不重复追加；noOpen=false 可关闭", () => {
+  assert.deepEqual(buildRestartArgs(["--no-open"], { isRestart: true, webProfile: true }), [
+    "--no-open",
+  ]);
+  assert.deepEqual(
+    buildRestartArgs([], { isRestart: true, webProfile: true, noOpen: false }),
+    [],
+  );
+});
+
+console.log("isWebProfile");
+test("按 profile bundles 判断是否 web", () => {
+  const dir = mkdtempSync(join(tmpdir(), "dsh-safe-web-"));
+  mkdirSync(join(dir, "profiles", "web"), { recursive: true });
+  writeFileSync(
+    join(dir, "profiles", "web", "package.json"),
+    JSON.stringify({
+      dsh: { profile: { bundles: ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app"] } },
+    }),
+  );
+  mkdirSync(join(dir, "profiles", "headless"), { recursive: true });
+  writeFileSync(
+    join(dir, "profiles", "headless", "package.json"),
+    JSON.stringify({
+      dsh: { profile: { bundles: ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-headless"] } },
+    }),
+  );
+
+  assert.equal(isWebProfile(dir, "web"), true);
+  assert.equal(isWebProfile(dir, "headless"), false);
+  assert.equal(isWebProfile(dir, "missing"), false);
   rmSync(dir, { recursive: true, force: true });
 });
 
